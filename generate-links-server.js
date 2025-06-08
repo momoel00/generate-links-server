@@ -1,3 +1,4 @@
+const { executablePath } = require('puppeteer');
 const express = require('express');
 const bodyParser = require('body-parser');
 const puppeteer = require('puppeteer');
@@ -54,7 +55,11 @@ app.get('/run-now', (req, res) => {
 
 // 🧠 createGoogleSite: placeholder function
 async function createGoogleSite(targetUrl, description) {
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({
+  headless: true,
+  executablePath: executablePath(), // مهم جداً
+  args: ['--no-sandbox', '--disable-setuid-sandbox']
+});
   const page = await browser.newPage();
 
   if (fs.existsSync(COOKIES_PATH)) {
