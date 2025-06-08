@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
-const db = require('./db'); // الاتصال بقاعدة البيانات
+const db = require('./db'); // الاتصال بقاعدة البيانا
 
 const app = express();
 app.use(bodyParser.json());
