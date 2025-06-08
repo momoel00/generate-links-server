@@ -3,18 +3,14 @@
   "version": "1.0.0",
   "main": "generate-links-server.js",
   "scripts": {
-    "postinstall": "puppeteer browsers install chrome",
+    "postinstall": "puppeteer install",
     "start": "node generate-links-server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "axios": "^1.9.0",
     "body-parser": "^2.2.0",
     "express": "^5.1.0",
     "mysql2": "^3.14.1",
-    "puppeteer": "^24.10.0"
-  },
-  "description": ""
+    "puppeteer": "^21.3.8"
+  }
 }
