@@ -4,18 +4,18 @@ const bodyParser = require('body-parser');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
-const db = require('./db'); // اتصال MySQL
+const db = require('./db'); // الاتصال بقاعدة البيانات
 
 const app = express();
 app.use(bodyParser.json());
 
 const COOKIES_PATH = path.resolve(__dirname, 'gmail_cookies.json');
 
-// ✅ API للاستقبال من WordPress أو أي واجهة
+// ✅ API من WordPress
 app.post('/generate-links', async (req, res) => {
   const { authority_link_target_url, authority_link_description, authority_link_platforms } = req.body;
-
   console.log('📩 Received link generation request:', req.body);
+
   const results = {};
 
   try {
@@ -23,7 +23,6 @@ app.post('/generate-links', async (req, res) => {
       const link = await createGoogleSite(authority_link_target_url, authority_link_description);
       results.googleSites = link;
 
-      // ⬇️ حفظ في قاعدة البيانات
       db.query(
         'INSERT INTO generated_links (platform, url, description) VALUES (?, ?, ?)',
         ['Google Sites', link, authority_link_description],
@@ -41,25 +40,24 @@ app.post('/generate-links', async (req, res) => {
   }
 });
 
-// ✅ Endpoint إضافي لتشغيل يدوي
+// ✅ Manual GET endpoint
 app.get('/run-now', (req, res) => {
   db.query('SELECT * FROM generated_links ORDER BY created_at DESC LIMIT 1', (err, rows) => {
     if (err || !rows.length) return res.status(500).send('No recent data found');
-
     const latest = rows[0];
     console.log('🚀 Manual Trigger - Last Entry:', latest);
-    // من هنا ممكن تعاود تنفذ عليه باك لينك
     return res.send('Trigger done ✅');
   });
 });
 
-// 🧠 createGoogleSite: placeholder function
+// ✅ Puppeteer Logic
 async function createGoogleSite(targetUrl, description) {
   const browser = await puppeteer.launch({
-  headless: true,
-  executablePath: executablePath(), // مهم جداً
-  args: ['--no-sandbox', '--disable-setuid-sandbox']
-});
+    headless: true,
+    executablePath: executablePath(),
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
+
   const page = await browser.newPage();
 
   if (fs.existsSync(COOKIES_PATH)) {
@@ -71,21 +69,20 @@ async function createGoogleSite(targetUrl, description) {
   await page.goto('https://sites.google.com/new', { waitUntil: 'networkidle2' });
 
   if (page.url().includes('accounts.google.com')) {
-    console.log('🔐 Manual login required... Please log in in the opened window.');
+    console.log('🔐 Login required manually');
     await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 300000 });
     const cookies = await page.cookies();
     fs.writeFileSync(COOKIES_PATH, JSON.stringify(cookies, null, 2));
     console.log('✅ Cookies saved');
   }
 
-  // ❗️ هنا خاصك تزيد الكود باش تنشئ فعلياً Google Site
   console.log(`🚧 Placeholder: would now create Google Site with backlink to ${targetUrl}`);
 
   await browser.close();
   return `https://sites.google.com/.../placeholder-link-to-${encodeURIComponent(targetUrl)}`;
 }
 
-// ⏱ اختيارية: تجلب آخر روابط تلقائياً كل دقيقة
+// ✅ Auto fetch preview every 60s
 setInterval(() => {
   db.query('SELECT * FROM generated_links ORDER BY created_at DESC LIMIT 5', (err, rows) => {
     if (err) return console.error('⛔️ DB fetch error:', err);
@@ -94,7 +91,7 @@ setInterval(() => {
       console.log(`🔗 [${link.platform}] ${link.url}`);
     });
   });
-}, 60000); // كل 60 ثانية
+}, 60000);
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Link Generator running on http://localhost:${PORT}`));
